@@ -1,4 +1,5 @@
 import React from 'react'
+import { FaGithub } from 'react-icons/fa'
 
 const Navbar = () => {
   return (
@@ -8,13 +9,10 @@ const Navbar = () => {
             Pass
             <span className='text-blue-400'>Save/&gt;</span>
         </div>
-      <ul>
-        <li className='flex gap-4 text-xl'>
-            <a className='hover:text-blue-400' href="#">Home</a>
-            <a className='hover:text-blue-400' href="#">About</a>
-            <a className='hover:text-blue-400' href="#">Contact</a>
-        </li>
-      </ul>
+        <a href='https://github.com/JapnoorHere' target='_blank' className='flex items-center justify-center gap-3 bg-blue-400 p-1 rounded-full cursor-pointer hover:bg-blue-500'>
+        <FaGithub fontSize={40}/>
+        <p className='text-xl pr-1'>Github</p>
+        </a>
     </nav>
   )
 }
