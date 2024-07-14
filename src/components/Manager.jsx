@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import { FaCopy, FaEye, FaEyeSlash, FaRegEdit } from 'react-icons/fa'
 import { MdDelete } from 'react-icons/md';
 import { RiFunctionAddFill } from 'react-icons/ri'
-import { v4 as uuidv4 } from 'uuid'
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -19,27 +18,43 @@ const Manager = () => {
     const [editId, setEditId] = useState('');
 
     useEffect(() => {
-        let passwords = localStorage.getItem("passwords");
-        if (passwords) {
-            setPasswordArray(JSON.parse(passwords));
-        }
+
+
+        fetch('http://localhost:3000/')
+            .then((res) => res.json())
+            .then((json) => {
+                setPasswordArray(json);
+            })
     }, []);
 
-    const savePassword = () => {
-        setPasswordArray([...passwordArray, { ...form, id: uuidv4() }]);
-        localStorage.setItem("passwords", JSON.stringify([...passwordArray, { ...form, id: uuidv4() }]));
-        console.log([...passwordArray, form]);
-        setForm({ site: "", username: "", password: "" })
-        toast.success('Password saved!', {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "dark",
+    const savePassword = async () => {
+        await fetch('http://localhost:3000/', {
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: 'same-origin',
+            method: "POST",
+            body: JSON.stringify(form)
+        }).then(() => {
+            fetch('http://localhost:3000/')
+                .then((res) => res.json())
+                .then((json) => {
+                    setPasswordArray(json);
+
+                })
+            setForm({ site: "", username: "", password: "" })
+            toast.success('Password saved!', {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "dark",
             });
+
+        })
     }
 
     const handleInputChange = (e) => {
@@ -58,53 +73,61 @@ const Manager = () => {
             draggable: true,
             progress: undefined,
             theme: "dark",
-            });
+        });
     }
 
     const deletePassword = (id) => {
-        console.log(id);
-        setPasswordArray(passwordArray.filter(item => item.id !== id))
-        localStorage.setItem("passwords", JSON.stringify(passwordArray.filter(item => item.id !== id)))
-        console.log(passwordArray);
-        toast.success('Password deleted!', {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "dark",
+        setPasswordArray(passwordArray.filter(item => item._id !== id))
+        fetch(`http://localhost:3000/${id}`, {
+            method: "DELETE",
+        }).then(() => {
+            toast.success('Password deleted!', {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "dark",
             });
+
+        })
     }
 
     const editPassword = (id) => {
-        console.log(id);
-        setForm(passwordArray.filter(item => item.id === id)[0])
-        console.log(passwordArray);
+        setForm(passwordArray.filter(item => item._id === id)[0])
         setEditMode(true);
         setEditId(id);
-
     }
 
-    const editSavePassword = () => {
-        const updatedArray = passwordArray.map(item =>
-            item.id === editId ? { ...form, id: editId } : item
-        );
-        setPasswordArray(updatedArray);
-        localStorage.setItem("passwords", JSON.stringify(updatedArray));
-        setEditMode(false);
-        setForm({ site: "", username: "", password: "" });
-        toast.success('Password updated!', {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "dark",
+    const editSavePassword = async () => {
+        await fetch(`http://localhost:3000/${editId}`, {
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: 'same-origin',
+            method: "PUT",
+            body: JSON.stringify(form)
+        }).then(() => {
+            const updatedArray = passwordArray.map(item =>
+                item._id === editId ? { ...form, _id: editId } : item
+            );
+            setPasswordArray(updatedArray);
+            setEditMode(false);
+            setForm({ site: "", username: "", password: "" });
+            toast.success('Password updated!', {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "dark",
             });
+
+        })
     }
 
     return (
@@ -121,7 +144,6 @@ const Manager = () => {
                 draggable
                 pauseOnHover
                 theme="dark"
-            // transition:Bounce,
             />
 
             <div class="absolute top-0 z-[-2] h-screen w-screen bg-[#000000] bg-[radial-gradient(#ffffff33_1px,#00091d_1px)] bg-[size:20px_20px]"></div>
@@ -151,6 +173,7 @@ const Manager = () => {
                     <h1 className='text-white text-xl font-bold'>Your Passwords</h1>
                     {passwordArray.size == 0 && <p className='text-white'>No passwords to show.</p>}
                     {passwordArray.length != 0 && <table className="table-auto text-white w-full rounded-md overflow-hidden">
+
                         <thead className='bg-blue-400'>
                             <tr>
                                 <th className='py-2'>Site</th>
@@ -184,8 +207,8 @@ const Manager = () => {
                                         </td>
                                         <td className='py-2 text-center'>
                                             <div className='flex gap-2 items-center justify-center'>
-                                                <FaRegEdit fontSize={20} className='text-green-600 cursor-pointer' onClick={() => editPassword(item.id)} />
-                                                <MdDelete fontSize={20} className='text-red-600 cursor-pointer' onClick={() => deletePassword(item.id)} />
+                                                <FaRegEdit fontSize={20} className='text-green-600 cursor-pointer' onClick={() => editPassword(item._id)} />
+                                                <MdDelete fontSize={20} className='text-red-600 cursor-pointer' onClick={() => deletePassword(item._id)} />
                                             </div>
                                         </td>
                                     </tr>
