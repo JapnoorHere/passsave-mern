@@ -10,12 +10,22 @@ const Manager = () => {
 
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [form, setForm] = useState({ site: "", username: "", password: "" });
-    
+    const handlePasswordVisibleClick = () => {
+        setPasswordVisible(!passwordVisible);
+    }
     const [passwordArray, setPasswordArray] = useState([]);
     const [editMode, setEditMode] = useState(false);
     const [editId, setEditId] = useState('');
 
-    
+    useEffect(() => {
+
+
+        fetch('http://localhost:3000/')
+            .then((res) => res.json())
+            .then((json) => {
+                setPasswordArray(json);
+            })
+    }, []);
 
     const savePassword = async () => {
         await fetch('http://localhost:3000/', {
